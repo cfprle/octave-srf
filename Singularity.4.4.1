@@ -1,0 +1,64 @@
+BootStrap: docker
+From: ubuntu:cosmic
+
+%labels
+Maintainer eric.burgueno@plantandfood.co.nz
+Version 4.4.1
+
+%environment
+    export LC_ALL=C
+    export TZ=Pacific/Auckland
+
+    #Set python3 as default as per https://github.com/cbm755/octsympy/issues/770
+    export PYTHON=python3
+
+%post
+    #Set timezone for GNUTLS
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+    apt-get update
+
+    #Install TLS, SSL and curl packages for octave and its packages
+    apt-get install -y gnutls-bin
+    apt-get install -y libgnutls28-dev
+    apt-get install -y less
+    apt-get install -y libssl-dev
+    apt-get install -y pkg-config
+    apt-get install -y curl
+
+    #Install python3 and pip for ocatave and its packages
+    apt-get install -y python3
+    apt-get install -y python3-pip
+
+    #Upgrade pip to newer version
+    python3 -m pip install --user pip
+    python3 -m pip install --upgrade pip
+
+    #Listed below are the ubuntu repository versions, not used as they are too old
+    #apt-get install -y python-matplotlib
+    #apt-get install -y python-numpy
+    #apt-get install -y python-scipy
+    #apt-get install -y python-sympy
+
+    #Install python package dependancies of the octave packages
+    python3 -m pip install --upgrade setuptools
+    python3 -m pip install --upgrade matplotlib
+    python3 -m pip install --upgrade numpy
+    python3 -m pip install --upgrade scipy
+    python3 -m pip install --upgrade sympy
+
+    #Install octave and gnuplot
+    apt-get -y install octave
+    apt-get -y install liboctave-dev
+    apt-get -y install gnuplot
+
+    #Install octave packages. Unfortunatley version numbering is not possible at this time
+    octave-cli --eval "pkg install -forge -global symbolic"
+    octave-cli --eval "pkg install -forge -global io"
+    octave-cli --eval "pkg install -forge -global statistics"
+    octave-cli --eval "pkg install -forge -global struct"
+    octave-cli --eval "pkg install -forge -global optim"
+    octave-cli --eval "pkg install -forge -global parallel"
+
+%runscript
+  #Note here that the entry point has been changed to the octave-cli rather than the octave ui binary.
+  exec octave-cli "$@"
